@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TuProfe20 Lab: Inecuaciones Cuadráticas</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- KaTeX -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap');
+        
+        body { margin: 0; padding: 0; overflow: hidden; width: 100vw; height: 100dvh; user-select: none; }
+        .font-fun { font-family: 'Nunito', sans-serif; }
+        
+        @keyframes floatUp { 0% { transform: translateY(105vh) rotate(0deg); } 100% { transform: translateY(-105vh) rotate(360deg); } }
+        @keyframes slideInRight { 0% { opacity: 0; transform: translateX(15px); } 100% { opacity: 1; transform: translateX(0); } }
+        @keyframes fadeInScale { 0% { opacity: 0; transform: scale(0.8); } 100% { opacity: 1; transform: scale(1); } }
+        @keyframes jellyPop {
+            0% { transform: scale3d(.3, .3, .3); opacity: 0; }
+            20% { transform: scale3d(1.18, 1.18, 1.18); }
+            40% { transform: scale3d(.92, .92, .92); }
+            60% { transform: scale3d(1.06, 1.06, 1.06); opacity: 1; }
+            80% { transform: scale3d(.97, .97, .97); }
+            100% { transform: scale3d(1, 1, 1); opacity: 1; }
+        }
+        @keyframes robotFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+        @keyframes robotThinkTilt { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(6deg) translateY(-3px); } }
+        @keyframes robotJump { 0%, 100% { transform: translateY(0); } 30% { transform: translateY(-15px); } }
+        @keyframes robotTalkArmL { 0%, 100% { transform: rotate(45deg); } 50% { transform: rotate(95deg); } }
+        @keyframes robotTalkArmR { 0%, 100% { transform: rotate(-45deg); } 50% { transform: rotate(-95deg); } }
+        
+        /* Animaciones Secuenciales del Gráfico */
+        @keyframes traceArch { from { stroke-dashoffset: 100; } to { stroke-dashoffset: 0; } }
+        @keyframes sectorAppear { from { opacity: 0; } to { opacity: .30; } }
+        @keyframes signFade { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes revealSolution { from {opacity:0; transform:scaleY(.35)} to {opacity:.96; transform:scaleY(1)} }
+        @keyframes revealGuides { from {opacity:0} to {opacity:1} }
+
+        @keyframes drawLine { 
+            0% { stroke-dashoffset: 1500; } 
+            100% { stroke-dashoffset: 0; } 
+        }
+        @keyframes fillAppear { 
+            0% { opacity: 0; } 
+            100% { opacity: 0.6; } 
+        }
+        @keyframes signAppear { 
+            0% { opacity: 0; transform: scale(0.3) translateY(20px); } 
+            100% { opacity: 1; transform: scale(1) translateY(0); } 
+        }
+        @keyframes confettiExplosion { 
+            0% { transform: translate(0, 0) scale(1) rotate(0deg); opacity: 1; } 
+            80% { opacity: 1; } 
+            100% { transform: translate(var(--tx), var(--ty)) scale(0) rotate(var(--rot)); opacity: 0; } 
+        }
+
+        /* Ocultar scrollbars (barras espaciadoras de desplazamiento) globalmente */
+        .scrollbar-hide::-webkit-scrollbar { display: none !important; }
+        .scrollbar-hide { -ms-overflow-style: none !important; scrollbar-width: none !important; }
+
+        .animate-floatUp { animation: floatUp linear infinite; }
+        .animate-slideInRight { animation: slideInRight 0.3s ease-out forwards; }
+        .animate-fadeInScale { animation: fadeInScale 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        .animate-jellyPop { animation: jellyPop 0.55s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        .animate-robotFloat { animation: robotFloat 3s ease-in-out infinite; }
+        .animate-robotThinkTilt { animation: robotThinkTilt 2s ease-in-out infinite; }
+        .animate-robotJump { animation: robotJump 1s cubic-bezier(0.28, 0.84, 0.42, 1) infinite; }
+        .animate-robotTalkArmL { animation: robotTalkArmL 0.6s ease-in-out infinite; }
+        .animate-robotTalkArmR { animation: robotTalkArmR 0.6s ease-in-out infinite 0.1s; }
+        .animate-confettiExplosion { animation: confettiExplosion 1.8s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
+
+        .katex { font-weight: 900 !important; }
+        .katex-display { margin: 0 !important; padding: 0 !important; }
+        
+        /* Ajuste de fuentes clamp para que TODO quepa en una fila al 50% de ancho sin desbordar */
+        .math-card .katex { font-size: clamp(0.9rem, 1.8vw, 1.25rem) !important; color: #1e293b !important; }
+        .math-enunciado .katex { font-size: clamp(1rem, 2vw, 1.4rem) !important; color: #ffffff !important; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+        .math-current .katex { font-size: clamp(0.6rem, 1.3vw, 1.6rem) !important; color: #0f172a !important; }
+        .math-history .katex { font-size: clamp(0.55rem, 1.1vw, 1.3rem) !important; color: #475569 !important; }
+        
+        /* Contenedor estricto de una fila centrada, ocultando cualquier exceso */
+        .math-container-single-line {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 0.5rem 0;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef, memo } = React;
+
+        const Icon = ({ paths, className = "", size = 24, fill = "none", strokeWidth = "2.5" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill={fill} stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className} dangerouslySetInnerHTML={{__html: paths}} />
+        );
+
+        const VolumeX = (p) => <Icon {...p} paths='<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/>' />;
+        const Volume2 = (p) => <Icon {...p} paths='<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>' />;
+        const Rocket = (p) => <Icon {...p} paths='<path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/>' />;
+        const Sparkles = (p) => <Icon {...p} paths='<path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4"/><path d="M3 5h4"/><path d="M19 3v4"/><path d="M17 5h4"/>' />;
+        const Home = (p) => <Icon {...p} paths='<path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>' />;
+        const ChevronLeft = (p) => <Icon {...p} paths='<polyline points="15 18 9 12 15 6"/>' />;
+        const ChevronRight = (p) => <Icon {...p} paths='<polyline points="9 18 15 12 9 6"/>' />;
+        const Activity = (p) => <Icon {...p} paths='<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>' />;
+
+        const AudioController = {
+            ctx: null, muted: false, bgmNode: null,
+            init: function() {
+                if (this.ctx) return;
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (AudioContext) this.ctx = new AudioContext();
+            },
+            startBGM: function() {
+                if (!this.ctx) return;
+                if (this.ctx.state === 'suspended') this.ctx.resume().catch(() => {});
+                if (this.bgmNode) return;
+                const mainGain = this.ctx.createGain();
+                mainGain.gain.value = this.muted ? 0 : 0.08;
+                const filter = this.ctx.createBiquadFilter();
+                filter.type = 'lowpass'; filter.frequency.value = 800;
+                filter.connect(mainGain); mainGain.connect(this.ctx.destination);
+                this.bgmNode = { mainGain, filter, interval: null };
+                const chords = [ [55, 60, 64, 71], [52, 57, 64, 71], [53, 57, 60, 64], [50, 55, 59, 64] ];
+                let chordIndex = 0;
+                const playChord = () => {
+                    if (this.ctx.state !== 'running') return;
+                    const chord = chords[chordIndex];
+                    chordIndex = (chordIndex + 1) % chords.length;
+                    chord.forEach((midi, i) => {
+                        const osc = this.ctx.createOscillator();
+                        const gain = this.ctx.createGain();
+                        osc.type = 'sine'; osc.frequency.value = 440 * Math.pow(2, (midi - 69) / 12);
+                        const now = this.ctx.currentTime; const delay = i * 0.2;
+                        gain.gain.setValueAtTime(0, now + delay);
+                        gain.gain.linearRampToValueAtTime(0.15, now + delay + 2);
+                        gain.gain.exponentialRampToValueAtTime(0.001, now + delay + 8);
+                        osc.connect(gain); gain.connect(filter);
+                        osc.start(now + delay); osc.stop(now + delay + 8);
+                    });
+                };
+                playChord(); this.bgmNode.interval = setInterval(playChord, 6000);
+            },
+            play: function(type) {
+                if (this.muted || !this.ctx) return;
+                if (this.ctx.state === 'suspended') this.ctx.resume();
+                const osc = this.ctx.createOscillator(); const gain = this.ctx.createGain();
+                osc.connect(gain); gain.connect(this.ctx.destination);
+                const now = this.ctx.currentTime;
+                if (type === 'pop') {
+                    osc.type = 'sine'; osc.frequency.setValueAtTime(500, now); osc.frequency.exponentialRampToValueAtTime(800, now + 0.1);
+                    gain.gain.setValueAtTime(0.25, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                    osc.start(now); osc.stop(now + 0.1);
+                } else if (type === 'pop-reverse') {
+                    osc.type = 'triangle'; osc.frequency.setValueAtTime(650, now); osc.frequency.exponentialRampToValueAtTime(280, now + 0.12);
+                    gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+                    osc.start(now); osc.stop(now + 0.12);
+                } else if (type === 'success') {
+                    osc.disconnect(); const notes = [523.25, 659.25, 783.99, 1046.50];
+                    notes.forEach((freq, i) => {
+                        const o = this.ctx.createOscillator(); const g = this.ctx.createGain();
+                        o.type = 'triangle'; o.frequency.value = freq;
+                        o.connect(g); g.connect(this.ctx.destination);
+                        const startTime = now + (i * 0.07);
+                        g.gain.setValueAtTime(0, startTime); g.gain.linearRampToValueAtTime(0.2, startTime + 0.04); g.gain.linearRampToValueAtTime(0, startTime + 0.35);
+                        o.start(startTime); o.stop(startTime + 0.35);
+                    });
+                } else if (type === 'swoosh') {
+                    osc.type = 'sine'; osc.frequency.setValueAtTime(280, now); osc.frequency.exponentialRampToValueAtTime(70, now + 0.18);
+                    gain.gain.setValueAtTime(0.2, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.18);
+                    osc.start(now); osc.stop(now + 0.18);
+                }
+            },
+            toggleMute: function() { 
+                this.muted = !this.muted; 
+                if (this.bgmNode) this.bgmNode.mainGain.gain.setTargetAtTime(this.muted ? 0 : 0.08, this.ctx.currentTime, 0.1);
+                return this.muted; 
+            }
+        };
+
+        const MathDisplay = memo(({ latex, className = "", inline = false }) => {
+            const containerRef = useRef(null);
+            useEffect(() => {
+                if (containerRef.current && window.katex) {
+                    try { window.katex.render(latex, containerRef.current, { displayMode: !inline, throwOnError: false, strict: false, trust: true }); }
+                    catch (e) { containerRef.current.innerText = latex; }
+                }
+            }, [latex, inline]);
+            // Contenedor que previene saltos y recortes
+            return inline ? <span ref={containerRef} className={`inline-block align-middle ${className}`} /> : <div className={`math-container-single-line ${className}`}><div ref={containerRef} className="w-full text-center" /></div>;
+        });
+
+        const DrawingCanvas = () => {
+            const canvasRef = useRef(null);
+            const [isDrawing, setIsDrawing] = useState(false);
+            const [isDrawMode, setIsDrawMode] = useState(false);
+            const [tool, setTool] = useState('pen');
+            const [isSnapMode, setIsSnapMode] = useState(false);
+            const [penColor, setPenColor] = useState('#ef4444');
+            const [penWidth, setPenWidth] = useState(6);
+            const penPointsRef = useRef([]);
+            const activePointerRef = useRef(null);
+            const savedImageRef = useRef(null);
+            const startPosRef = useRef({ x: 0, y: 0 });
+            const historyRef = useRef([]);
+
+            const playPop = () => { AudioController.init(); AudioController.startBGM(); AudioController.play('pop'); };
+
+            useEffect(() => {
+                const canvas = canvasRef.current;
+                if (!canvas || !canvas.parentElement) return;
+                const updateSize = (entries) => {
+                    for (let entry of entries) {
+                        const { width, height } = entry.contentRect;
+                        const ctx = canvas.getContext('2d');
+                        let imgData = null;
+                        if (canvas.width > 0 && canvas.height > 0) {
+                            try { imgData = ctx.getImageData(0, 0, canvas.width, canvas.height); } catch (e) {}
+                        }
+                        canvas.width = width; canvas.height = height;
+                        if (imgData) ctx.putImageData(imgData, 0, 0);
+                    }
+                };
+                const observer = new ResizeObserver(updateSize);
+                observer.observe(canvas.parentElement);
+                return () => observer.disconnect();
+            }, []);
+
+            const renderPen = (points, straight = false) => {
+                const ctx = canvasRef.current.getContext('2d');
+                ctx.putImageData(savedImageRef.current, 0, 0);
+                const angle = -15 * Math.PI / 180;
+                const c = Math.cos(angle), s = Math.sin(angle);
+                const local = points.map(p => ({ x: c * p.x + s * p.y, y: (-s * p.x + c * p.y) / 0.5 }));
+                ctx.save();
+                ctx.transform(c, s, -0.5 * s, 0.5 * c, 0, 0);
+                ctx.lineWidth = penWidth;
+                ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+                ctx.strokeStyle = penColor; ctx.fillStyle = penColor;
+                ctx.globalCompositeOperation = 'source-over';
+                ctx.beginPath();
+                ctx.moveTo(local[0].x, local[0].y);
+                if (local.length === 1) {
+                    ctx.arc(local[0].x, local[0].y, penWidth / 2, 0, Math.PI * 2);
+                    ctx.fill();
+                } else {
+                    if (!straight) {
+                        for (let i = 1; i < local.length - 1; i++) {
+                            const midpoint = { x: (local[i].x + local[i + 1].x) / 2, y: (local[i].y + local[i + 1].y) / 2 };
+                            ctx.quadraticCurveTo(local[i].x, local[i].y, midpoint.x, midpoint.y);
+                        }
+                    }
+                    const last = local[local.length - 1];
+                    ctx.lineTo(last.x, last.y);
+                    ctx.stroke();
+                }
+                ctx.restore();
+            };
+
+            const startDrawing = (e) => {
+                if (!isDrawMode || activePointerRef.current !== null || (e.pointerType === 'mouse' && e.button !== 0)) return;
+                const canvas = canvasRef.current;
+                const ctx = canvas.getContext('2d');
+                const rect = canvas.getBoundingClientRect();
+                
+                historyRef.current.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
+                
+                ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+                ctx.lineWidth = tool === 'highlighter' ? 24 : penWidth;
+                ctx.strokeStyle = tool === 'highlighter' ? `${penColor}4D` : penColor;
+                ctx.globalCompositeOperation = tool === 'highlighter' ? 'multiply' : 'source-over';
+
+                const startX = e.clientX - rect.left;
+                const startY = e.clientY - rect.top;
+                
+                savedImageRef.current = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                startPosRef.current = { x: startX, y: startY };
+                
+                ctx.beginPath();
+                ctx.moveTo(startX, startY);
+                penPointsRef.current = [{ x: startX, y: startY }];
+                activePointerRef.current = e.pointerId;
+                canvas.setPointerCapture(e.pointerId);
+                if (tool === 'pen') renderPen(penPointsRef.current);
+                setIsDrawing(true);
+            };
+
+            const draw = (e) => {
+                if (activePointerRef.current !== e.pointerId || !isDrawMode) return;
+                const canvas = canvasRef.current;
+                const ctx = canvas.getContext('2d');
+                const rect = canvas.getBoundingClientRect();
+                const currentX = e.clientX - rect.left;
+                const currentY = e.clientY - rect.top;
+
+                if (isSnapMode || e.shiftKey) {
+                    ctx.putImageData(savedImageRef.current, 0, 0);
+                    const dx = currentX - startPosRef.current.x;
+                    const dy = currentY - startPosRef.current.y;
+                    const angle = Math.atan2(dy, dx);
+                    const snappedAngle = Math.round(angle / (Math.PI / 4)) * (Math.PI / 4);
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    const snapX = startPosRef.current.x + Math.cos(snappedAngle) * dist;
+                    const snapY = startPosRef.current.y + Math.sin(snappedAngle) * dist;
+                    if (tool === 'pen') { renderPen([startPosRef.current, { x: snapX, y: snapY }], true); return; }
+                    ctx.beginPath(); ctx.moveTo(startPosRef.current.x, startPosRef.current.y); ctx.lineTo(snapX, snapY); ctx.stroke();
+                } else {
+                    if (tool === 'pen') {
+                        const events = e.nativeEvent?.getCoalescedEvents?.() || [];
+                        const samples = events.length ? events : [e];
+                        samples.forEach(sample => penPointsRef.current.push({ x: sample.clientX - rect.left, y: sample.clientY - rect.top }));
+                        renderPen(penPointsRef.current); return;
+                    }
+                    if (tool === 'highlighter') ctx.putImageData(savedImageRef.current, 0, 0);
+                    ctx.lineTo(currentX, currentY); ctx.stroke();
+                }
+            };
+
+            const stopDrawing = () => {
+                const canvas = canvasRef.current;
+                const pointer = activePointerRef.current;
+                activePointerRef.current = null;
+                if (pointer !== null && canvas.hasPointerCapture(pointer)) canvas.releasePointerCapture(pointer);
+                if (isDrawing) { canvas.getContext('2d').closePath(); setIsDrawing(false); }
+            };
+
+            const selectTool = (nextTool) => {
+                stopDrawing(); playPop();
+                const enabled = nextTool !== 'selector' && !(isDrawMode && tool === nextTool);
+                setIsDrawMode(enabled);
+                if (nextTool !== 'selector') setTool(nextTool);
+            };
+
+            useEffect(() => {
+                const onKey = (event) => {
+                    if (event.key === 'Escape') { setIsDrawing(false); setIsDrawMode(false); }
+                    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z') {
+                        if (historyRef.current.length > 0) {
+                            playPop();
+                            const lastState = historyRef.current.pop();
+                            const canvas = canvasRef.current;
+                            canvas.getContext('2d').putImageData(lastState, 0, 0);
+                            savedImageRef.current = lastState;
+                        }
+                    }
+                };
+                window.addEventListener('keydown', onKey);
+                return () => window.removeEventListener('keydown', onKey);
+            }, []);
+
+            const clearCanvas = () => {
+                playPop();
+                const canvas = canvasRef.current;
+                const ctx = canvas.getContext('2d');
+                historyRef.current.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                savedImageRef.current = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            };
+
+            const colors = [
+                { name: 'Rojo', hex: '#ef4444', tw: 'bg-[#ef4444]' },
+                { name: 'Negro', hex: '#0f172a', tw: 'bg-[#0f172a]' },
+                { name: 'Azul', hex: '#3b82f6', tw: 'bg-[#3b82f6]' },
+                { name: 'Verde', hex: '#22c55e', tw: 'bg-[#22c55e]' },
+                { name: 'Amarillo', hex: '#facc15', tw: 'bg-[#facc15]' }
+            ];
+
+            return (
+                <>
+                    <div style={{zIndex: 120, pointerEvents: 'auto'}} className="absolute top-2 right-2 flex flex-wrap max-w-[calc(100%-1rem)] justify-end gap-2 pointer-events-auto bg-white/80 p-1.5 rounded-xl backdrop-blur-sm shadow-md border border-slate-200">
+                        <button onClick={() => selectTool('selector')} aria-pressed={!isDrawMode} title="Seleccionar (Esc)" className={`px-3 py-1.5 text-xs sm:text-sm font-black rounded-lg border-2 shadow-sm transition-all ${!isDrawMode ? 'bg-cyan-500 text-white border-cyan-600' : 'bg-white text-slate-600 border-slate-300'}`}>🖱️ Selector</button>
+                        <button onClick={() => selectTool('pen')} className={`px-3 py-1.5 text-xs sm:text-sm font-black rounded-lg border-2 shadow-sm transition-all ${isDrawMode && tool === 'pen' ? 'bg-indigo-500 text-white border-indigo-600 scale-105' : 'bg-white text-slate-600 border-slate-300'}`}>🖊️ Lápiz</button>
+                        <button onClick={() => selectTool('highlighter')} className={`px-3 py-1.5 text-xs sm:text-sm font-black rounded-lg border-2 shadow-sm transition-all ${isDrawMode && tool === 'highlighter' ? 'bg-yellow-400 text-slate-900 border-yellow-500 scale-105' : 'bg-white text-slate-600 border-slate-300'}`}>🖍️ Resaltador</button>
+                        {isDrawMode && tool === 'pen' && (
+                            <label className="flex items-center gap-2 px-2 py-1 rounded-lg bg-white border-2 border-indigo-200 text-xs font-black text-slate-700">
+                                Grosor <input type="range" min="3" max="16" step="1" value={penWidth} onChange={e => setPenWidth(Number(e.target.value))} className="w-20 accent-indigo-600" />
+                            </label>
+                        )}
+                        {isDrawMode && (
+                            <>
+                                <button onClick={() => { playPop(); setIsSnapMode(!isSnapMode); }} className={`px-3 py-1.5 text-xs sm:text-sm font-black rounded-lg border-2 shadow-sm transition-all ${isSnapMode ? 'bg-blue-500 text-white border-blue-600 scale-105' : 'bg-white text-slate-600 border-slate-300'}`}>📐 Recto</button>
+                                <button onClick={clearCanvas} className="px-3 py-1.5 text-xs sm:text-sm font-black bg-white text-rose-600 border-2 border-rose-300 rounded-lg shadow-sm hover:bg-rose-50 active:scale-95 transition-all">🗑️ Limpiar</button>
+                                <div className="px-2 py-1.5 text-xs font-bold text-slate-400 flex items-center bg-white rounded-lg border border-slate-200">CTRL+Z: Deshacer</div>
+                            </>
+                        )}
+                    </div>
+                    {isDrawMode && (
+                        <div className="absolute top-1/2 right-4 -translate-y-1/2 z-[110] flex flex-col gap-3 p-2 bg-white/90 backdrop-blur-md rounded-xl border-[3px] border-slate-200 shadow-xl pointer-events-auto">
+                            {colors.map(c => (
+                                <button key={c.hex} onClick={() => { playPop(); setPenColor(c.hex); }} className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full border-[3px] shadow-sm transition-all hover:scale-110 active:scale-95 ${c.tw} ${penColor === c.hex ? 'border-white outline outline-[3px] outline-slate-800 scale-110' : 'border-black/20'}`} />
+                            ))}
+                        </div>
+                    )}
+                    <canvas ref={canvasRef} style={{ zIndex: 100, pointerEvents: isDrawMode ? 'auto' : 'none', touchAction: isDrawMode ? 'none' : 'auto' }} className={`absolute inset-0 z-[100] touch-none ${isDrawMode ? 'cursor-crosshair pointer-events-auto' : 'pointer-events-none'}`} onPointerDown={startDrawing} onPointerMove={draw} onPointerUp={e => { if (activePointerRef.current === e.pointerId) { draw(e); stopDrawing(); } }} onPointerLeave={e => { if (!e.currentTarget.hasPointerCapture(e.pointerId)) stopDrawing(); }} onLostPointerCapture={stopDrawing} onPointerCancel={stopDrawing} />
+                </>
+            );
+        };
+
+        // Recta numérica del método de puntos críticos: arcos y semáforo de derecha a izquierda.
+        const NumberLine = memo(({ config }) => {
+            if (!config) return (
+                <div className="w-full h-full min-h-[200px] flex flex-col items-center justify-center text-slate-300 opacity-60">
+                    <Activity className="w-16 h-16 mb-2" />
+                    <p className="font-bold text-center text-lg">La recta numérica aparecerá<br/>al calcular los puntos críticos...</p>
+                </div>
+            );
+
+            // Comparación superpuesta en un único sistema de coordenadas: las guías
+            // verticales de los extremos de la intersección cruzan las tres rectas.
+            if (config.comparison) return <IntersectionChart config={config} />;
+            return <div className="w-full h-full flex items-center justify-center"><NumberLineSvg config={config} /></div>;
+        });
+
+        const IntersectionChart = memo(({ config }) => {
+            const rows = config.comparison;
+            const span = Math.max(1, config.max - config.min);
+            const lo = config.min - span * .16, hi = config.max + span * .16;
+            const x0=120, x1=950;
+            const xAt = v => v === -Infinity ? x0 : v === Infinity ? x1 : x0 + (v-lo)/(hi-lo)*(x1-x0);
+            const yRows=[76,170,264];
+            const last=rows[rows.length-1];
+            const intersect=last.intervals || [];
+            const guideValues=[...new Set(intersect.flatMap(it=>[it.start,it.end]).filter(Number.isFinite))];
+            return <div className="w-full h-full flex flex-col items-center justify-center px-1">
+                <div className="text-center text-xs sm:text-sm font-black text-indigo-700">INTERSECCIÓN DE CONJUNTOS SOLUCIÓN</div>
+                <svg viewBox="0 0 1000 345" className="w-full max-h-full" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Tres rectas numéricas alineadas y guías verticales para mostrar la intersección">
+                    {/* Banda común y guías verticales, visibles tras las dos soluciones. */}
+                    {intersect.map((it,i)=><rect key={'band'+i} x={xAt(it.start)} y="38" width={Math.max(0,xAt(it.end)-xAt(it.start))} height="250" fill="#fde68a" opacity="0" style={{animation:'revealGuides .5s ease-out 1.7s forwards'}} />)}
+                    {rows.map((r,i)=>{
+                        const y=yRows[i];
+                        return <g key={i}>
+                            <text x="8" y={y+7} fill={i===2?'#92400e':'#3730a3'} fontSize={i===2?25:27} fontWeight="900">{r.label}</text>
+                            <line x1={x0-9} x2={x1+9} y1={y} y2={y} stroke="#be123c" strokeWidth="4" strokeLinecap="round" />
+                            <path d={`M ${x0-18} ${y} l 13 -7 v 14 Z M ${x1+18} ${y} l -13 -7 v 14 Z`} fill="#be123c" />
+                            {(r.intervals||[]).map((it,j)=><rect key={j} x={xAt(it.start)} y={y-12} width={Math.max(0,xAt(it.end)-xAt(it.start))} height="24" rx="7" fill={i===2?'#facc15':'#fbbf24'} opacity="0" style={{animation:`revealSolution .5s ease-out ${i*.55+.25}s forwards`,transformBox:'fill-box',transformOrigin:'center'}} />)}
+                            {(r.points||[]).map((pt,j)=><g key={j}>
+                                <circle cx={xAt(pt.val)} cy={y} r="10" fill={pt.included?'#0891b2':'white'} stroke="#0e7490" strokeWidth="4" />
+                                <text x={xAt(pt.val)} y={y+38} fontSize="23" fontWeight="900" textAnchor="middle" fill="#0f172a">{pt.val}</text>
+                            </g>)}
+                        </g>;
+                    })}
+                    {guideValues.map((v,i)=><g key={'guide'+i} opacity="0" style={{animation:'revealGuides .45s ease-out 1.8s forwards'}}>
+                        <line x1={xAt(v)} x2={xAt(v)} y1="35" y2="289" stroke="#0f172a" strokeWidth="3" strokeDasharray="9 7" />
+                        <rect x={xAt(v)-27} y="5" width="54" height="29" rx="12" fill="#fff7ed" stroke="#f59e0b" strokeWidth="2" />
+                        <text x={xAt(v)} y="26" fontSize="22" fontWeight="900" textAnchor="middle" fill="#92400e">{v}</text>
+                    </g>)}
+                    <text x="530" y="332" textAnchor="middle" fontSize="21" fontWeight="900" fill="#92400e">Las líneas verticales delimitan el intervalo común</text>
+                </svg>
+            </div>;
+        });
+
+        const NumberLineSvg = memo(({ config, compact = false }) => {
+            const { min, max, points = [], zones = [], intervals = [] } = config;
+            const x0 = 48, x1 = 852, baseline = compact ? 66 : 142;
+            const h = compact ? 100 : 240;
+            const span = Math.max(1, max - min);
+            const leftBound = min - span * 0.16, rightBound = max + span * 0.16;
+            const pos = val => x0 + ((val - leftBound) / (rightBound - leftBound)) * (x1 - x0);
+            const xAt = val => val === -Infinity ? x0 : val === Infinity ? x1 : pos(val);
+            const roots = points.map(p => p.val).sort((a,b) => a-b);
+            const tickValues = [...new Set([...roots, ...intervals.flatMap(q => [q.start, q.end]).filter(Number.isFinite)])].sort((a,b)=>a-b);
+            const shapeHeight = compact ? 0 : 79;
+            const orderedZones = [...zones].sort((a,b) => xAt(b.start) - xAt(a.start));
+            const arcDuration = 0.55;
+            const signDelay = orderedZones.length * arcDuration;
+            const showZones = !compact && zones.length > 0;
+            // Esperamos a que terminen TODOS los arcos y los tres rellenos.
+            const zoneFinish = orderedZones.some(z=>!z.instant)
+                ? signDelay + (orderedZones.length-1)*.33 + .48
+                : .35;
+            const solutionDelay = showZones ? zoneFinish + .20 : .30;
+            const fmt = v => Number.isInteger(v) ? String(v) : String(Number(v.toFixed(3)));
+            return (
+                <svg viewBox={`0 0 900 ${h}`} preserveAspectRatio="xMidYMid meet" className="w-full max-h-full" style={{overflow:'visible'}} role="img" aria-label="Recta numérica con puntos críticos, intervalos y regiones de signos">
+                    {showZones && orderedZones.map((z,i) => {
+                        const left = xAt(z.start), right = xAt(z.end);
+                        const middle = (left + right) / 2;
+                        const arch = `M ${right} ${baseline} Q ${middle} ${baseline - shapeHeight * 2} ${left} ${baseline}`;
+                        const sector = `${arch} L ${right} ${baseline} Z`;
+                        const positive = z.sign === '+';
+                        const fill = positive ? '#22c55e' : '#ef4444';
+                        const textFill = positive ? '#166534' : '#991b1b';
+                        const instant = !!z.instant;
+                        const t0 = instant ? 0 : i * arcDuration;
+                        const tFill = instant ? 0 : signDelay + i * 0.33;
+                        return (
+                            <g key={`arc-${i}`}>
+                                <path d={sector} fill={fill} opacity="0" style={{animation:`sectorAppear .36s ease-out ${tFill}s forwards`}} />
+                                <path d={arch} fill="none" stroke="#111827" strokeWidth="5" strokeLinecap="round" pathLength="100" strokeDasharray="100" strokeDashoffset="100" style={{animation:`traceArch ${instant ? 0.01 : arcDuration}s ease-in-out ${t0}s forwards`}} />
+                                <text x={middle} y={baseline - Math.min(31, Math.max(19, shapeHeight * .42))} fontSize="42" fontWeight="900" textAnchor="middle" fill={textFill} opacity="0" style={{animation:`signFade .32s ease-out ${tFill + .08}s forwards`}}>{z.sign}</text>
+                            </g>
+                        );
+                    })}
+                    <line x1="34" x2="866" y1={baseline} y2={baseline} stroke="#e11d48" strokeWidth={compact ? 3.2 : 4} strokeLinecap="round" />
+                    <path d={`M 24 ${baseline} l 13 -7 v 14 Z M 876 ${baseline} l -13 -7 v 14 Z`} fill="#e11d48" />
+                    {/* La franja sobre la recta representa el conjunto solución, no el signo. */}
+                    {intervals.map((it,i) => {
+                        const xa=xAt(it.start), xb=xAt(it.end);
+                        return <g key={`selection-${i}`}>
+                            <rect x={xa} y={baseline - (compact ? 12 : 14)} width={Math.max(0,xb-xa)} height={compact ? 24 : 28} rx="7" fill="#facc15" opacity="0" style={{animation:`revealSolution .55s ease-out ${solutionDelay}s forwards`, transformBox:'fill-box',transformOrigin:'center'}} />
+                        </g>;
+                    })}
+                    {tickValues.map((v,i) => {
+                        const match = points.find(p=>p.val===v);
+                        const endpoint = intervals.some(it=>it.start===v || it.end===v);
+                        const included = match ? match.included : intervals.some(it=>(it.start===v && it.includeStart!==false)||(it.end===v && it.includeEnd!==false));
+                        return <g key={`tick-${i}`}>
+                            <line x1={pos(v)} x2={pos(v)} y1={baseline-12} y2={baseline+12} stroke="#be123c" strokeWidth="3" />
+                            {(match || endpoint) && <circle cx={pos(v)} cy={baseline} r={compact?7:9} fill={included?'#0891b2':'white'} stroke="#0e7490" strokeWidth="3.5" />}
+                            <text x={pos(v)} y={baseline + (compact?29:37)} fontSize={compact?22:27} textAnchor="middle" fontWeight="900" fill="#0f172a">{fmt(v)}</text>
+                        </g>;
+                    })}
+                    {!compact && <g fontSize="24" fontWeight="800" fill="#475569"><text x="4" y={baseline+35}>−∞</text><text x="850" y={baseline+35}>+∞</text></g>}
+                </svg>
+            );
+        });
+
+        // Ejercicios con Ecuaciones en 1 SOLA FILA ESTRICTAMENTE
+        const EXERCISES = [
+            { id: 1, title: "Ejercicio 1", subtitle: "Inecuación Completa",
+              cardGradient: "from-blue-500/30 to-cyan-600/30 border-blue-400", badgeColor: "bg-blue-500",
+              enunciado: () => <span>Resuelva <MathDisplay inline latex="(3x+1)(x-4) \ge (2x+1)(x-1) - 27" /></span>,
+              steps: [
+                  { latex: String.raw`3x^2 - 12x + x - 4 \ge 2x^2 - 2x + x - 28`, propertyText: "Expandir", robotSpeech: "Aplicamos propiedad distributiva en ambos lados." },
+                  { latex: String.raw`x^2 - 10x + 24 \ge 0`, propertyText: "Forma General", robotSpeech: "Pasamos todo a la izquierda para comparar con cero." },
+                  { latex: String.raw`(x-6)(x-4) \ge 0`, propertyText: "Factorizar", robotSpeech: "Factorizamos por el método del aspa simple." },
+                  { latex: String.raw`(x-6)(x-4) = 0 \implies x=4, x=6`, propertyText: "Igualar a Cero", robotSpeech: "Igualamos a cero de forma estricta (Ecuación) para ubicar los puntos críticos en el eje.",
+                    graphic: { min: 2, max: 8, points: [{val: 4, included: true}, {val: 6, included: true}] } },
+                  { latex: String.raw`\text{Signos de: } (x-6)(x-4) \ge 0`, propertyText: "Zonas (+/-)", robotSpeech: "La curva salta de derecha a izquierda. Terminados los trazos, se pinta verde, rojo, verde de forma secuencial.",
+                    graphic: { min: 2, max: 8, points: [{val: 4, included: true}, {val: 6, included: true}],
+                               zones: [{start: 6, end: Infinity, sign: '+'}, {start: 4, end: 6, sign: '-'}, {start: -Infinity, end: 4, sign: '+'}] } },
+                  { latex: String.raw`CS = \langle -\infty; 4] \cup [6; +\infty \rangle`, propertyText: "Solución", robotSpeech: "Al ser '≥ 0', el conjunto solución corresponde estrictamente a las zonas verdes positivas.",
+                    graphic: { min: 2, max: 8, points: [{val: 4, included: true}, {val: 6, included: true}],
+                               zones: [{start: 6, end: Infinity, sign: '+', instant: true}, {start: 4, end: 6, sign: '-', instant: true}, {start: -Infinity, end: 4, sign: '+', instant: true}],
+                               intervals: [{start: 6, end: Infinity}, {start: -Infinity, end: 4}] } }
+              ]
+            },
+            { id: 2, title: "Ejercicio 2", subtitle: "Mayor valor entero",
+              cardGradient: "from-purple-500/30 to-fuchsia-600/30 border-purple-400", badgeColor: "bg-purple-500",
+              enunciado: () => <span>Resuelva <MathDisplay inline latex="x^2 - 21x + 80 < 0" /> e indique el mayor valor entero de <MathDisplay inline latex="x" />.</span>,
+              steps: [
+                  { latex: String.raw`(x-16)(x-5) < 0`, propertyText: "Factorizar", robotSpeech: "La inecuación está lista. Factorizamos por aspa simple." },
+                  { latex: String.raw`(x-16)(x-5) = 0 \implies x=5, x=16`, propertyText: "Puntos Críticos", robotSpeech: "Igualamos a cero para obtener los puntos críticos exactos.",
+                    graphic: { min: 3, max: 18, points: [{val: 5, included: false}, {val: 16, included: false}] } },
+                  { latex: String.raw`\text{Signos de: } (x-16)(x-5) < 0`, propertyText: "Zonas (+/-)", robotSpeech: "Al ser estricta '<', los puntos van sin pintar (huecos). Las ondas se trazan y colorean de derecha a izquierda.",
+                    graphic: { min: 3, max: 18, points: [{val: 5, included: false}, {val: 16, included: false}],
+                               zones: [{start: 16, end: Infinity, sign: '+'}, {start: 5, end: 16, sign: '-'}, {start: -Infinity, end: 5, sign: '+'}] } },
+                  { latex: String.raw`CS = \langle 5; 16 \rangle`, propertyText: "Conjunto Solución", robotSpeech: "Como la inecuación es menor a cero (<0), la respuesta es la zona pintada de rojo (-).",
+                    graphic: { min: 3, max: 18, points: [{val: 5, included: false}, {val: 16, included: false}],
+                               zones: [{start: 16, end: Infinity, sign: '+', instant: true}, {start: 5, end: 16, sign: '-', instant: true}, {start: -Infinity, end: 5, sign: '+', instant: true}],
+                               intervals: [{start: 5, end: 16}] } },
+                  { latex: String.raw`x_{máx} \in \mathbb{Z} = 15`, propertyText: "Pregunta", robotSpeech: "El intervalo abierto termina en 16. El número entero inmediatamente anterior es el 15." }
+              ]
+            },
+            { id: 3, title: "Ejercicio 3", subtitle: "Multiplicar por -1",
+              cardGradient: "from-rose-500/30 to-pink-600/30 border-rose-400", badgeColor: "bg-rose-500",
+              enunciado: () => <span>Obtenga el conjunto solución de <MathDisplay inline latex="-x^2 + 3x \ge 0" />.</span>,
+              steps: [
+                  { latex: String.raw`(-1)(-x^2 + 3x) \le (-1)(0)`, propertyText: "Por -1", robotSpeech: "Multiplicamos por -1 e invertimos el sentido de la desigualdad a ≤." },
+                  { latex: String.raw`x^2 - 3x \le 0 \implies x(x-3) \le 0`, propertyText: "Factor común", robotSpeech: "Factorizamos extrayendo la x de forma directa." },
+                  { latex: String.raw`x(x-3) = 0 \implies x=0, x=3`, propertyText: "Puntos Críticos", robotSpeech: "Igualamos a cero para obtener raíces.",
+                    graphic: { min: -2, max: 5, points: [{val: 0, included: true}, {val: 3, included: true}] } },
+                  { latex: String.raw`\text{Signos de: } x(x-3) \le 0`, propertyText: "Zonas (+/-)", robotSpeech: "El símbolo es '≤', así que pintamos los puntos cerrados. Trazamos de derecha a izquierda las zonas.",
+                    graphic: { min: -2, max: 5, points: [{val: 0, included: true}, {val: 3, included: true}],
+                               zones: [{start: 3, end: Infinity, sign: '+'}, {start: 0, end: 3, sign: '-'}, {start: -Infinity, end: 0, sign: '+'}] } },
+                  { latex: String.raw`CS = [0; 3]`, propertyText: "Solución", robotSpeech: "Al ser ≤ 0, el intervalo solución es la región coloreada de rojo (-).",
+                    graphic: { min: -2, max: 5, points: [{val: 0, included: true}, {val: 3, included: true}],
+                               zones: [{start: 3, end: Infinity, sign: '+', instant: true}, {start: 0, end: 3, sign: '-', instant: true}, {start: -Infinity, end: 0, sign: '+', instant: true}],
+                               intervals: [{start: 0, end: 3}] } }
+              ]
+            },
+            { id: 4, title: "Ejercicio 4", subtitle: "Operaciones Extensas",
+              cardGradient: "from-amber-500/30 to-orange-600/30 border-amber-400", badgeColor: "bg-amber-500",
+              enunciado: () => <span>Resuelva <MathDisplay inline latex="(5x-4)^2 - (3x+5)(2x-1) \le 20x(x-2) + 27" />.</span>,
+              steps: [
+                  { latex: String.raw`25x^2 - 40x + 16 - (6x^2+7x-5) \le 20x^2 - 40x + 27`, propertyText: "Desarrollar", robotSpeech: "Desarrollamos todos los productos en ambos miembros." },
+                  { latex: String.raw`19x^2 - 47x + 21 \le 20x^2 - 40x + 27`, propertyText: "Reducir", robotSpeech: "Simplificamos en el lado izquierdo." },
+                  { latex: String.raw`0 \le x^2 + 7x + 6 \implies x^2 + 7x + 6 \ge 0`, propertyText: "Forma General", robotSpeech: "Pasamos todo a la derecha para que x² sea positivo, y giramos la expresión." },
+                  { latex: String.raw`(x+6)(x+1) = 0 \implies x=-6, x=-1`, propertyText: "Puntos Críticos", robotSpeech: "Factorizamos por aspa simple y hallamos los puntos del eje igualando a cero.",
+                    graphic: { min: -8, max: 1, points: [{val: -6, included: true}, {val: -1, included: true}] } },
+                  { latex: String.raw`\text{Signos de: } (x+6)(x+1) \ge 0`, propertyText: "Zonas (+/-)", robotSpeech: "Con los puntos cerrados, las ondas saltan de derecha a izquierda pintando alternadamente (+, -, +).",
+                    graphic: { min: -8, max: 1, points: [{val: -6, included: true}, {val: -1, included: true}],
+                               zones: [{start: -1, end: Infinity, sign: '+'}, {start: -6, end: -1, sign: '-'}, {start: -Infinity, end: -6, sign: '+'}] } },
+                  { latex: String.raw`CS = \langle -\infty; -6] \cup [-1; +\infty \rangle`, propertyText: "Solución", robotSpeech: "Para ≥0, el conjunto solución abarca todas las zonas verdes.",
+                    graphic: { min: -8, max: 1, points: [{val: -6, included: true}, {val: -1, included: true}],
+                               zones: [{start: -1, end: Infinity, sign: '+', instant: true}, {start: -6, end: -1, sign: '-', instant: true}, {start: -Infinity, end: -6, sign: '+', instant: true}],
+                               intervals: [{start: -1, end: Infinity}, {start: -Infinity, end: -6}] } }
+              ]
+            },
+            { id: 5, title: "Ejercicio 5", subtitle: "Conteo de Negativos",
+              cardGradient: "from-lime-500/30 to-green-600/30 border-lime-400", badgeColor: "bg-lime-500",
+              enunciado: () => <span>¿Cuántos enteros negativos verifican <MathDisplay inline latex="(2x+5)^2 \ge (5x+2)^2" />?</span>,
+              steps: [
+                  { latex: String.raw`4x^2 + 20x + 25 \ge 25x^2 + 20x + 4`, propertyText: "Desarrollo", robotSpeech: "Expandimos los dos binomios al cuadrado directamente." },
+                  { latex: String.raw`21 \ge 21x^2 \implies x^2 - 1 \le 0`, propertyText: "Reducir", robotSpeech: "Cancelamos las x y formamos una diferencia de cuadrados al acomodar." },
+                  { latex: String.raw`(x-1)(x+1) = 0 \implies x=-1, x=1`, propertyText: "Puntos Críticos", robotSpeech: "Calculamos los límites exactos del intervalo igualando a cero.",
+                    graphic: { min: -3, max: 3, points: [{val: -1, included: true}, {val: 1, included: true}] } },
+                  { latex: String.raw`\text{Signos de: } (x-1)(x+1) \le 0`, propertyText: "Zonas (+/-)", robotSpeech: "Puntos pintados por el ≤. La curva salta y rellena con colores de derecha a izquierda.",
+                    graphic: { min: -3, max: 3, points: [{val: -1, included: true}, {val: 1, included: true}],
+                               zones: [{start: 1, end: Infinity, sign: '+'}, {start: -1, end: 1, sign: '-'}, {start: -Infinity, end: -1, sign: '+'}] } },
+                  { latex: String.raw`CS = [-1; 1]`, propertyText: "Intervalo", robotSpeech: "El intervalo solución es la onda central coloreada de rojo (-).",
+                    graphic: { min: -3, max: 3, points: [{val: -1, included: true}, {val: 1, included: true}],
+                               zones: [{start: 1, end: Infinity, sign: '+', instant: true}, {start: -1, end: 1, sign: '-', instant: true}, {start: -Infinity, end: -1, sign: '+', instant: true}],
+                               intervals: [{start: -1, end: 1}] } },
+                  { latex: String.raw`x \in \{-1, 0, 1\} \implies \text{Resp: 1 valor}`, propertyText: "Pregunta", robotSpeech: "De los enteros, solo el '-1' cumple ser negativo." }
+              ]
+            },
+            { id: 6, title: "Ejercicio 6", subtitle: "Sistema de Inecuaciones",
+              cardGradient: "from-pink-500/30 to-rose-600/30 border-pink-400", badgeColor: "bg-pink-500",
+              enunciado: () => <span>Del sistema <MathDisplay inline latex="\begin{cases} x^2 < 4 \\ x^2 \ge 3x \end{cases}" /> indique el número de valores enteros que lo verifica.</span>,
+              steps: [
+                  { latex: String.raw`I:\; x^2<4 \iff (x-2)(x+2)<0`, propertyText: "Inecuación I", robotSpeech: "Llevamos todo al primer miembro y factorizamos la primera inecuación." },
+                  { latex: String.raw`(x-2)(x+2)=0 \Rightarrow x=-2,\;x=2`, propertyText: "Puntos críticos I", robotSpeech: "Los puntos críticos son -2 y 2. Como la desigualdad es estricta, los extremos quedan abiertos.",
+                    graphic: { min: -3, max: 4, points: [{val:-2,included:false},{val:2,included:false}] } },
+                  { latex: String.raw`CS_1=(-2,2)`, propertyText: "Signos y solución I", robotSpeech: "Trazamos de derecha a izquierda: verde, rojo, verde. Como necesitamos <0, tomamos solo la región roja central.",
+                    graphic: { min:-3,max:4,points:[{val:-2,included:false},{val:2,included:false}], zones:[{start:2,end:Infinity,sign:'+'},{start:-2,end:2,sign:'-'},{start:-Infinity,end:-2,sign:'+'}], intervals:[{start:-2,end:2,includeStart:false,includeEnd:false}] } },
+                  { latex: String.raw`II:\;x^2\ge3x\iff x(x-3)\ge0`, propertyText: "Inecuación II", robotSpeech: "Resolvemos ahora, de manera independiente, la segunda inecuación por puntos críticos." },
+                  { latex: String.raw`x(x-3)=0 \Rightarrow x=0,\;x=3`, propertyText: "Puntos críticos II", robotSpeech: "Ubicamos los puntos 0 y 3. Esta vez los dos extremos sí pertenecen al conjunto solución.",
+                    graphic: {min:-3,max:4,points:[{val:0,included:true},{val:3,included:true}]} },
+                  { latex: String.raw`CS_2=(-\infty,0]\cup[3,+\infty)`, propertyText: "Signos y solución II", robotSpeech: "Los signos son verde, rojo, verde. Como buscamos ≥0, seleccionamos las dos regiones verdes y los puntos críticos.",
+                    graphic: {min:-3,max:4,points:[{val:0,included:true},{val:3,included:true}],zones:[{start:3,end:Infinity,sign:'+'},{start:0,end:3,sign:'-'},{start:-Infinity,end:0,sign:'+'}],intervals:[{start:-Infinity,end:0},{start:3,end:Infinity}]} },
+                  { latex: String.raw`CS_1\cap CS_2=(-2,0]`, propertyText: "Intersección gráfica", robotSpeech: "Comparamos las dos rectas numéricas. La intersección es únicamente el tramo de -2 abierto hasta 0 cerrado.",
+                    graphic: {min:-3,max:4,comparison:[
+                      {label:'CS₁',points:[{val:-2,included:false},{val:2,included:false}],intervals:[{start:-2,end:2,includeStart:false,includeEnd:false}]},
+                      {label:'CS₂',points:[{val:0,included:true},{val:3,included:true}],intervals:[{start:-Infinity,end:0},{start:3,end:Infinity}]},
+                      {label:'CS₁ ∩ CS₂',highlight:true,points:[{val:-2,included:false},{val:0,included:true}],intervals:[{start:-2,end:0,includeStart:false,includeEnd:true}]}
+                    ]} },
+                  { latex: String.raw`x\in\{-1,0\}\Rightarrow\boxed{2\text{ valores}}`, propertyText: "Respuesta final", robotSpeech: "Los únicos enteros que pertenecen a ambos conjuntos solución son -1 y 0: dos valores." }
+              ]
+            },
+            { id: 7, title: "Ejercicio 7", subtitle: "Términos Invertidos",
+              cardGradient: "from-blue-600/30 to-indigo-700/30 border-blue-500", badgeColor: "bg-blue-600",
+              enunciado: () => <span>Resuelva <MathDisplay inline latex="-24 + 11x - x^2 > 0" />.</span>,
+              steps: [
+                  { latex: String.raw`-x^2 + 11x - 24 > 0 \implies x^2 - 11x + 24 < 0`, propertyText: "Ordenar y (+)", robotSpeech: "Multiplicamos por -1, invirtiendo el símbolo inmediatamente." },
+                  { latex: String.raw`(x-8)(x-3) = 0 \implies x=3, x=8`, propertyText: "Puntos Críticos", robotSpeech: "Factorizamos y usamos la ecuación para extraer los puntos exactos.",
+                    graphic: { min: 1, max: 10, points: [{val: 3, included: false}, {val: 8, included: false}] } },
+                  { latex: String.raw`\text{Signos de: } (x-8)(x-3) < 0`, propertyText: "Zonas (+/-)", robotSpeech: "La curva avanza de derecha a izquierda pintando (+, -, +). Puntos vacíos (huecos).",
+                    graphic: { min: 1, max: 10, points: [{val: 3, included: false}, {val: 8, included: false}],
+                               zones: [{start: 8, end: Infinity, sign: '+'}, {start: 3, end: 8, sign: '-'}, {start: -Infinity, end: 3, sign: '+'}] } },
+                  { latex: String.raw`CS = \langle 3; 8 \rangle`, propertyText: "Solución", robotSpeech: "La respuesta es la región roja que es menor a 0.",
+                    graphic: { min: 1, max: 10, points: [{val: 3, included: false}, {val: 8, included: false}], intervals: [{start: 3, end: 8}],
+                               zones: [{start: 8, end: Infinity, sign: '+', instant: true}, {start: 3, end: 8, sign: '-', instant: true}, {start: -Infinity, end: 3, sign: '+', instant: true}] } }
+              ]
+            },
+            { id: 8, title: "Ejercicio 8", subtitle: "Discriminante",
+              cardGradient: "from-indigo-500/30 to-violet-600/30 border-indigo-400", badgeColor: "bg-indigo-500",
+              enunciado: () => <span>Si <MathDisplay inline latex="\forall x \in \mathbb{R}" /> se cumple <MathDisplay inline latex="x^2 + 3x + m \ge 0" />, indique el menor valor entero de <MathDisplay inline latex="m" />.</span>,
+              steps: [
+                  { latex: String.raw`ax^2+bx+c \ge 0 \quad (\forall x \in \mathbb{R})`, propertyText: "Concepto", robotSpeech: "Para que un polinomio sea siempre positivo, su Discriminante debe ser ≤ 0." },
+                  { latex: String.raw`\Delta \le 0 \implies b^2 - 4ac \le 0`, propertyText: "Discriminante", robotSpeech: "Aplicamos la fórmula general en una sola fila." },
+                  { latex: String.raw`(3)^2 - 4(1)(m) \le 0 \implies 9 - 4m \le 0`, propertyText: "Operar", robotSpeech: "Reemplazamos con a=1, b=3 y c=m." },
+                  { latex: String.raw`9 \le 4m \implies m \ge \frac{9}{4}`, propertyText: "Despejar 'm'", robotSpeech: "Resolvemos la inecuación lineal para 'm'." },
+                  { latex: String.raw`m \ge 2.25 \implies m_{\text{mín}} \in \mathbb{Z} = 3`, propertyText: "Pregunta", robotSpeech: "El menor valor entero que sea mayor o igual a 2.25 es el 3." }
+              ]
+            }
+        ];
+
+        const FloatingBackground = memo(() => {
+            const symbols = ['<', '>', '≤', '≥', 'x', 'y', '∞', '+', '-'];
+            const elements = Array.from({ length: 30 }).map((_, i) => ({
+                id: i, symbol: symbols[Math.floor(Math.random() * symbols.length)], left: `${Math.random() * 100}%`,
+                animationDuration: `${10 + Math.random() * 15}s`, animationDelay: `-${Math.random() * 20}s`,
+                fontSize: `${1 + Math.random() * 3}rem`, opacity: 0.1 + Math.random() * 0.15
+            }));
+            return (
+                <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+                    {elements.map((el) => (
+                        <div key={el.id} className="absolute text-white font-black animate-floatUp select-none drop-shadow-lg" style={{ left: el.left, bottom: '-15%', fontSize: el.fontSize, opacity: el.opacity, animationDuration: el.animationDuration, animationDelay: el.animationDelay }}>
+                            {el.symbol}
+                        </div>
+                    ))}
+                </div>
+            );
+        });
+
+        const Confetti = memo(() => {
+            const colors = ['#fde047', '#60a5fa', '#f472b6', '#34d399', '#a78bfa', '#ff5722'];
+            const pieces = Array.from({ length: 120 }).map((_, i) => ({
+                id: i, left: `${50 + (Math.random() * 20 - 10)}%`, color: colors[Math.floor(Math.random() * colors.length)],
+                tx: `${(Math.random() - 0.5) * 800}px`, ty: `${(Math.random() - 1) * 800}px`, rot: `${Math.random() * 720}deg`, delay: `${Math.random() * 0.2}s`
+            }));
+            return (
+                <div className="absolute inset-0 pointer-events-none z-50 flex items-center justify-center overflow-hidden">
+                    {pieces.map((p) => (
+                        <div key={p.id} className="absolute w-4 h-4 sm:w-5 sm:h-5 rounded-full animate-confettiExplosion shadow-sm" style={{ backgroundColor: p.color, '--tx': p.tx, '--ty': p.ty, '--rot': p.rot, animationDelay: p.delay, left: p.left, top: '50%' }} />
+                    ))}
+                </div>
+            );
+        });
+
+        const RobotAssistant = ({ step, maxSteps }) => {
+            const isFinalStep = step >= maxSteps;
+            const isThinking = step === maxSteps - 1;
+
+            const getContainerAnim = () => { if (isFinalStep) return 'animate-robotJump'; if (isThinking) return 'animate-robotThinkTilt'; return 'animate-robotFloat'; };
+            const getArmLAnim = () => { if (isFinalStep) return 'rotate-[150deg] animate-pulse'; if (step > 0) return 'animate-robotTalkArmL'; return 'rotate-45'; };
+            const getArmRAnim = () => { if (isFinalStep) return '-rotate-[150deg] animate-pulse'; if (step > 0) return 'animate-robotTalkArmR'; return '-rotate-45'; };
+            
+            const getEyes = () => {
+                if (isFinalStep) return <div className="w-full flex justify-between px-1"><div className="w-2.5 h-1.5 bg-emerald-400 rounded-t-full mt-0.5"></div><div className="w-2.5 h-1.5 bg-emerald-400 rounded-t-full mt-0.5"></div></div>;
+                if (step === 0) return <div className="w-full flex justify-between px-1.5"><div className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse"></div><div className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse"></div></div>;
+                return <div className="w-full flex justify-between px-1"><div className="w-2.5 h-2.5 bg-yellow-400 rounded-full animate-bounce"></div><div className="w-2.5 h-2.5 bg-yellow-400 rounded-full animate-bounce"></div></div>;
+            };
+            const getMouth = () => {
+                if (isFinalStep) return <div className="w-4 h-2.5 bg-rose-400 rounded-b-full mt-1"></div>;
+                if (step === 0) return <div className="w-3 h-1 bg-cyan-300 rounded-full mt-1"></div>;
+                return <div className="w-2.5 h-2.5 bg-rose-400 rounded-full mt-1 animate-ping"></div>;
+            };
+
+            return (
+                <div className={`relative flex flex-col items-center drop-shadow-xl select-none ${getContainerAnim()}`}>
+                    <div className="relative z-0 flex flex-col items-center translate-y-1">
+                        <div className={`w-2.5 h-2.5 rounded-full shadow-[0_0_10px_currentColor] z-10 transition-colors duration-300 ${isFinalStep ? 'text-emerald-400 bg-emerald-400' : 'text-yellow-400 bg-yellow-400 animate-pulse'}`}></div>
+                        <div className="w-1.5 h-3 bg-slate-300"></div>
+                    </div>
+                    <div className="relative z-10 w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-white to-slate-200 rounded-xl border-[2.5px] border-indigo-400 shadow-xl flex flex-col items-center justify-center p-1">
+                        <div className="w-full h-full bg-slate-900 rounded-lg flex flex-col items-center justify-center p-1 shadow-inner border-[1.5px] border-indigo-500">
+                            {getEyes()} {getMouth()}
+                        </div>
+                    </div>
+                    <div className={`absolute top-1/2 -left-1.5 w-2 h-4 bg-slate-200 border-[2px] border-indigo-400 rounded-full z-0 origin-top ${getArmLAnim()}`}></div>
+                    <div className={`absolute top-1/2 -right-1.5 w-2 h-4 bg-slate-200 border-[2px] border-indigo-400 rounded-full z-0 origin-top ${getArmRAnim()}`}></div>
+                </div>
+            );
+        };
+
+        function App() {
+            const [view, setView] = useState('home');
+            const [exIdx, setExIdx] = useState(0);
+            const [step, setStep] = useState(0);
+            const [isMuted, setIsMuted] = useState(false);
+            const scrollContainerRef = useRef(null);
+
+            const curEx = EXERCISES[exIdx];
+            const maxSteps = curEx.steps.length - 1;
+            const curStepData = curEx.steps[step];
+            const EnunciadoText = curEx.enunciado;
+
+            const handleInteraction = () => {
+                AudioController.init();
+                AudioController.startBGM();
+            };
+
+            const getCurrentGraphic = () => {
+                let graphic = null;
+                for (let i = step; i >= 0; i--) {
+                    if (curEx.steps[i].graphic) { graphic = curEx.steps[i].graphic; break; }
+                }
+                return graphic;
+            };
+
+            const startExercise = (index) => {
+                handleInteraction(); AudioController.play('swoosh');
+                setExIdx(index); setStep(0); setView('lab');
+            };
+
+            const nextStep = () => {
+                handleInteraction();
+                if (step < maxSteps) {
+                    const next = step + 1;
+                    setStep(next); AudioController.play(next === maxSteps ? 'success' : 'pop');
+                } else {
+                    AudioController.play('swoosh');
+                    if (exIdx < EXERCISES.length - 1) { setExIdx(exIdx + 1); setStep(0); } else { setView('home'); }
+                }
+            };
+
+            const prevStep = () => {
+                handleInteraction();
+                if (step > 0) { setStep(step - 1); AudioController.play('pop-reverse'); }
+            };
+
+            const toggleMute = () => { handleInteraction(); setIsMuted(AudioController.toggleMute()); };
+
+            useEffect(() => {
+                if(scrollContainerRef.current) scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
+            }, [step, exIdx, view]);
+
+            if (view === 'home') {
+                return (
+                    <div className="w-screen min-h-[100dvh] bg-gradient-to-br from-[#1e3a8a] via-[#4338ca] to-[#be185d] flex flex-col items-center justify-start p-4 sm:p-6 relative font-fun overflow-y-auto scrollbar-hide">
+                        <FloatingBackground />
+                        <div className="w-[96%] max-w-[1400px] z-20 flex items-center justify-between mb-8 sm:mb-12 mt-2">
+                            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl border-2 border-yellow-300 bg-white/15 backdrop-blur-md text-yellow-300 font-black tracking-wider uppercase shadow-md text-sm sm:text-base">
+                                <Rocket className="w-5 h-5 text-yellow-300" /> TuProfe20 Lab
+                            </div>
+                            <button onClick={toggleMute} className="p-2 sm:p-3 rounded-2xl bg-white/20 border-2 border-white/30 backdrop-blur-md text-white hover:bg-white/30 transition-all active:scale-95">
+                                {isMuted ? <VolumeX className="w-5 h-5 sm:w-6 sm:h-6" /> : <Volume2 className="w-5 h-5 sm:w-6 sm:h-6" />}
+                            </button>
+                        </div>
+
+                        <div className="relative z-10 text-center w-[96%] max-w-[1400px] flex flex-col items-center">
+                            <h1 className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black text-white mb-3 sm:mb-5 drop-shadow-[0_6px_0_rgba(0,0,0,0.3)] tracking-tight leading-none uppercase">
+                                Inecuaciones <span className="text-yellow-300 underline decoration-wavy decoration-cyan-400">Cuadráticas</span>
+                            </h1>
+                            <p className="text-base sm:text-xl lg:text-2xl text-purple-100 mb-8 sm:mb-12 font-bold max-w-3xl leading-relaxed">
+                                Puntos críticos en una sola fila. Método de zonas pintadas de derecha a izquierda 📈🤖
+                            </p>
+
+                            <div className="w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-12">
+                                {EXERCISES.map((ex, idx) => (
+                                    <button key={ex.id} onClick={() => startExercise(idx)} className="group text-left p-4 sm:p-5 rounded-[1.5rem] bg-gradient-to-br bg-opacity-90 backdrop-blur-xl border-[3px] border-white/40 hover:-translate-y-2 hover:shadow-[0_15px_30px_rgba(0,0,0,0.3)] transition-all flex flex-col relative overflow-hidden shadow-lg min-h-[10rem] sm:min-h-[12rem]" style={{ backgroundImage: `linear-gradient(to bottom right, var(--tw-gradient-stops))` }}>
+                                        <div className={`absolute inset-0 opacity-80 ${ex.cardGradient}`}></div>
+                                        <div className="relative z-10 flex-1 flex flex-col">
+                                            <div className="flex items-center justify-between mb-3">
+                                                <span className={`${ex.badgeColor} text-white text-xs sm:text-sm font-black px-3 py-1 rounded-md uppercase tracking-widest shadow-sm shrink-0`}>Reto {ex.id}</span>
+                                            </div>
+                                            <div className="flex-1 my-2 bg-white/95 rounded-xl p-3 text-slate-900 shadow-inner overflow-hidden flex items-center justify-center border border-white/60 w-full pointer-events-none math-card">
+                                                <MathDisplay latex={ex.steps[0].latex} />
+                                            </div>
+                                            <div className="text-white text-sm sm:text-base font-black text-center mt-2 drop-shadow-md">{ex.subtitle}</div>
+                                        </div>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="w-screen h-[100dvh] bg-gradient-to-br from-[#0f172a] via-[#312e81] to-[#831843] text-slate-800 flex flex-col p-2 sm:p-4 relative font-fun overflow-hidden">
+                    <FloatingBackground />
+                    {step === maxSteps && <Confetti />}
+
+                    <div className="shrink-0 relative z-10 w-[96%] max-w-[1400px] mx-auto flex justify-between items-center mb-3 sm:mb-4 px-1">
+                        <button onClick={() => { AudioController.play('swoosh'); setView('home'); }} className="flex items-center justify-center px-4 py-2 sm:px-5 sm:py-2.5 rounded-[1rem] sm:rounded-[1.2rem] bg-white/10 border-[3px] border-white/30 backdrop-blur-md text-white font-black hover:bg-white/20 transition-all shadow-lg active:scale-95 text-sm sm:text-base hover:scale-105">
+                            <Home className="w-5 h-5 sm:mr-2" />
+                            <span className="hidden sm:inline">Portada</span>
+                        </button>
+
+                        <div className="flex items-center gap-1.5 sm:gap-2 bg-black/30 p-1.5 sm:p-2 rounded-[1rem] sm:rounded-[1.2rem] border-2 border-white/20 backdrop-blur-md shadow-lg overflow-x-auto scrollbar-hide max-w-[50vw]">
+                            {EXERCISES.map((ex, i) => (
+                                <button key={ex.id} onClick={() => startExercise(i)} className={`shrink-0 w-8 h-8 sm:w-11 sm:h-11 rounded-[0.8rem] sm:rounded-[1rem] font-black text-sm sm:text-base transition-all ${exIdx === i ? 'bg-yellow-400 text-slate-900 scale-110 shadow-[0_0_15px_rgba(250,204,21,0.6)]' : 'text-white hover:bg-white/20'}`}>
+                                    {ex.id}
+                                </button>
+                            ))}
+                        </div>
+
+                        <button onClick={toggleMute} className="p-2 sm:p-3 rounded-[1rem] sm:rounded-[1.2rem] bg-white/10 border-[3px] border-white/30 text-white hover:bg-white/20 transition-all shadow-lg active:scale-95 hover:scale-105">
+                            {isMuted ? <VolumeX className="w-5 h-5 sm:w-6 sm:h-6" /> : <Volume2 className="w-5 h-5 sm:w-6 sm:h-6" />}
+                        </button>
+                    </div>
+
+                    <div className="flex-1 min-h-0 relative z-10 w-[96%] max-w-[1400px] mx-auto bg-white rounded-[2rem] sm:rounded-[2.5rem] border-[6px] sm:border-[8px] border-slate-100 shadow-[0_30px_60px_rgba(0,0,0,0.5)] flex flex-col overflow-hidden">
+                        
+                        <div className="shrink-0 bg-slate-900 border-b-[4px] border-cyan-500 px-4 py-3 sm:px-6 flex flex-col justify-center relative shadow-md z-20">
+                            <div className="flex justify-between items-center w-full max-w-5xl mx-auto mb-2">
+                                <span className="bg-cyan-500 text-slate-900 font-black text-xs sm:text-sm px-3 py-1 rounded-md uppercase tracking-widest shadow-sm">{curEx.title}</span>
+                                <span className="text-yellow-300 font-bold text-xs sm:text-sm bg-white/10 px-3 py-1 rounded-md">{curEx.subtitle}</span>
+                            </div>
+                            <div className="flex flex-col items-center justify-center text-white font-bold text-lg sm:text-xl md:text-2xl text-center w-full max-w-5xl mx-auto leading-relaxed math-enunciado">
+                                <EnunciadoText />
+                            </div>
+                        </div>
+
+                        <div className="flex-1 flex flex-col md:flex-row bg-slate-50 overflow-hidden relative">
+                            
+                            {/* ZONA DE DESARROLLO (50% FIJO) - SIN BARRA ESPACIADORA Y UNA FILA */}
+                            <div ref={scrollContainerRef} className="w-full md:w-1/2 flex-1 p-4 sm:p-6 overflow-y-auto scrollbar-hide flex flex-col space-y-6 pb-24 relative z-10 border-r-2 border-slate-200/50">
+                                <div className="absolute inset-0 opacity-[0.03] bg-[radial-gradient(#000_2px,transparent_2px)] [background-size:20px_20px] pointer-events-none"></div>
+                                
+                                {curEx.steps.slice(0, step + 1).map((s, idx) => (
+                                    <div key={`${exIdx}-${idx}`} className={`w-full flex flex-col transition-all duration-300 ${idx === step ? 'opacity-100 scale-100 animate-slideInRight' : 'opacity-60 scale-[0.98]'}`}>
+                                        <div className="mb-2 shrink-0 animate-jellyPop z-20 self-start">
+                                            <span className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full font-black text-xs sm:text-sm shadow-sm border-[2px] ${idx === step ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white border-cyan-300' : 'bg-slate-200 text-slate-500 border-slate-300'}`}>
+                                                {idx === step && <Sparkles className="w-4 h-4" />} 
+                                                <span>{s.propertyText}</span>
+                                            </span>
+                                        </div>
+                                        
+                                        {/* CONTENEDOR MATEMÁTICO: Una Sola Línea con fuente Clamp. Oculta desbordamiento por completo */}
+                                        <div className={`w-full text-left rounded-2xl flex items-center justify-center min-h-[4rem] px-2 overflow-hidden whitespace-nowrap ${
+                                            idx === step 
+                                            ? (step === maxSteps ? 'bg-[#fde047] border-[3px] border-[#eab308] shadow-md math-current' : 'bg-white border-[3px] border-cyan-400 shadow-md math-current') 
+                                            : 'bg-white/70 border-[2px] border-slate-200 math-history'
+                                        }`}>
+                                            <MathDisplay latex={s.latex} />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* ZONA GRÁFICA (50% FIJO) */}
+                            <div className="w-full md:w-1/2 bg-transparent p-4 sm:p-6 flex flex-col items-center justify-center relative z-10 pointer-events-none">
+                                <h3 className="absolute top-4 left-4 font-black text-slate-400 uppercase tracking-widest text-xs sm:text-sm flex items-center gap-1 z-20">
+                                    <Activity className="w-4 h-4 sm:w-5 sm:h-5 text-cyan-400"/> Gráfico
+                                </h3>
+                                <div className="w-full h-full bg-white border-[3px] border-dashed border-slate-200 rounded-[2rem] p-2 sm:p-4 flex items-center justify-center shadow-lg relative overflow-hidden pointer-events-auto">
+                                    <NumberLine key={`${exIdx}-${step}`} config={getCurrentGraphic()} />
+                                </div>
+                            </div>
+
+                            <DrawingCanvas />
+                        </div>
+
+                        <div className="shrink-0 bg-white w-full px-4 py-2 sm:px-8 sm:py-3 flex items-center gap-4 sm:gap-6 border-t-[4px] border-slate-100 z-30 relative shadow-[0_-10px_20px_rgba(0,0,0,0.05)]">
+                            <div className="shrink-0 absolute -top-10 sm:relative sm:-top-0 left-4 sm:left-0 drop-shadow-xl z-50">
+                                <RobotAssistant step={step} maxSteps={maxSteps} />
+                            </div>
+                            <div className="flex-1 text-xs sm:text-sm md:text-base font-bold text-slate-700 leading-snug sm:leading-relaxed bg-blue-50/80 p-2 sm:p-3 rounded-[1rem] border-2 border-blue-100 min-h-[3rem] flex items-center shadow-sm ml-[3.5rem] sm:ml-0">
+                                <div key={`speech-${exIdx}-${step}`} className="animate-slideInRight w-full">
+                                    {curStepData.robotSpeech}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="shrink-0 bg-gradient-to-b from-[#e0e7ff] to-[#c7d2fe] p-2 sm:p-3 w-full flex flex-col items-center border-t-[4px] border-white z-40">
+                            <div className="flex justify-center items-stretch w-full max-w-4xl gap-2 sm:gap-4 h-8 sm:h-10">
+                                <button onClick={prevStep} disabled={step === 0} className="flex-[0.8] bg-[#a5b4fc] border-b-[4px] border-[#6366f1] text-[#312e81] rounded-l-xl font-black text-xs sm:text-sm flex items-center justify-center gap-1 active:border-b-0 active:translate-y-[4px] disabled:opacity-40 transition-all hover:bg-[#c7d2fe]">
+                                    <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5 stroke-[3px]" />
+                                    <span className="hidden sm:inline">Atrás</span>
+                                </button>
+                                <div className="bg-[#6366f1] text-white font-black px-2 sm:px-4 text-xs sm:text-sm flex items-center justify-center border-b-[4px] border-[#4338ca] shadow-inner whitespace-nowrap min-w-[3rem]">
+                                    Paso {step + 1}/{maxSteps + 1}
+                                </div>
+                                <button onClick={nextStep} className={`flex-[2] border-b-[4px] text-white rounded-r-xl font-black text-xs sm:text-sm flex items-center justify-center gap-1 active:border-b-0 active:translate-y-[4px] transition-all shadow-sm hover:brightness-110 ${
+                                    step === maxSteps ? 'bg-gradient-to-r from-[#10b981] to-[#047857] border-[#065f46] animate-pulse' : 'bg-gradient-to-r from-[#06b6d4] to-[#0284c7] border-[#0369a1]'
+                                }`}>
+                                    <span>{step < maxSteps ? '¡Siguiente Paso!' : exIdx < EXERCISES.length - 1 ? `Siguiente Reto` : '¡Volver!'}</span>
+                                    <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 stroke-[3px]" />
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
